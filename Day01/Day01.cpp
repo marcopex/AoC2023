@@ -23,20 +23,20 @@ int main()
 	int cumSumTrial1 = 0;
 	int cumSumTrial2 = 0;
 
-	cout << "Script starts here " << '\n';
+	cout << "Script starts here" << std::endl;
 	
 	if (inputFile.is_open())
 	{
 		if (gPrintInput)
 		{
-			cout << "Input file content is\n";
-			cout << "**********************\n";
+			cout << "Input file content is" << std::endl;
+			cout << "**********************" << std::endl;
 			while (!inputFile.eof())
 			{
 				inputFile >> inputString;
-				cout << inputString << '\n';
+				cout << inputString << std::endl;
 			}
-			cout << "**********************\n";
+			cout << "**********************" << std::endl;
 			inputFile.clear();
 			inputFile.seekg(0);
 		}
@@ -50,11 +50,11 @@ int main()
 	}
 	else
 	{
-		cout << "Could not open input file!\n";
+		cout << "Could not open input file!" << std::endl;
 	}
 
-	cout << "Result for Trial #1 is " << cumSumTrial1 << '\n';
-	cout << "Result for Trial #2 is " << cumSumTrial2 << '\n';
+	cout << "Result for Trial #1 is " << cumSumTrial1 << std::endl;
+	cout << "Result for Trial #2 is " << cumSumTrial2 << std::endl;
 
 	return 0;
 }
@@ -77,7 +77,7 @@ int getCalibrationValueFromString(const string& inputString)
 			cout << "Parsing: " << inputString << " | ";
 			cout << "Indexes: " << firstDigit << " and " << lastDigit << " | ";
 			cout << "Strings: " << inputString[firstDigit] << " and " << inputString[lastDigit] << " | ";
-			cout << "Value: " << value << '\n';
+			cout << "Value: " << value << std::endl;
 		}
 		return value;
 	}
@@ -150,7 +150,7 @@ int getCalibrationsValueFromStringButReadingNumbersAsWords(const string& inputSt
 
 	if ((earlyIndex == 0xFFFF))
 	{
-		cout << "Digits not found!" << '\n';
+		cout << "Digits not found!" << std::endl;
 		return 0;
 	}
 
@@ -164,7 +164,7 @@ int getCalibrationsValueFromStringButReadingNumbersAsWords(const string& inputSt
 		cout << "Indexes: " << earlyIndex << " and " << lateIndex << " | ";
 		cout << "Strings: " << goalStrings[firstCnt] << " and " << goalStrings[lastCnt] << " | ";
 		cout << "Numbers: " << d1 << " and " << d2 << " | ";
-		cout << "Value: " << value << '\n';
+		cout << "Value: " << value << std::endl;
 	}
 
 	return value;

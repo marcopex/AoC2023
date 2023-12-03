@@ -26,7 +26,7 @@ int main()
 	int cumSumTrial1 = 0;
 	int cumSumTrial2 = 0;
 
-	cout << "Script starts here " << '\n';
+	cout << "Script starts here " << std::endl;
 
 	if (inputFile.is_open())
 	{
@@ -37,7 +37,7 @@ int main()
 			while (!inputFile.eof())
 			{
 				std::getline(inputFile, inputString, '\n');
-				cout << inputString << '\n';
+				cout << inputString << std::endl;
 			}
 			cout << "**********************\n";
 			inputFile.clear();
@@ -62,8 +62,8 @@ int main()
 		cout << "Could not open input file!\n";
 	}
 
-	cout << "Result for Trial #1 is " << cumSumTrial1 << '\n';
-	cout << "Result for Trial #2 is " << cumSumTrial2 << '\n';
+	cout << "Result for Trial #1 is " << cumSumTrial1 << std::endl;
+	cout << "Result for Trial #2 is " << cumSumTrial2 << std::endl;
 
 	return 0;
 }
@@ -77,7 +77,7 @@ std::vector<string> getExtractionString(const string& inputString, const char* d
 
 	if (gDebugEnabled)
 	{
-		std::cout << inputString << '\n';
+		std::cout << inputString << std::endl;
 	}
 
 	char* nextToken{ nullptr };
@@ -109,7 +109,7 @@ std::unordered_map<string, long> getLargestPresence(const std::vector<string>& s
 		{
 			cout << string << " | ";
 		}
-		cout << '\n';
+		cout << std::endl;
 	}
 
 	for (const auto& string : singleExtractionString)
@@ -164,12 +164,18 @@ std::unordered_map<string, long> getLargestPresence(const std::vector<string>& s
 					}
 				}
 			}
-			std::cout << " | ";
+			if (gDebugEnabled)
+			{
+				std::cout << " | ";
+			}
 		}
 		extractionCounter++;
 	}
-	std::cout << " final " << " red: " << presences.find("red")->second << " green: " << presences.find("green")->second << " blue: " << presences.find("blue")->second;
-	std::cout << "\n";
+	if (gDebugEnabled)
+	{
+		std::cout << " final " << " red: " << presences.find("red")->second << " green: " << presences.find("green")->second << " blue: " << presences.find("blue")->second;
+		std::cout << "\n";
+	}
 	return presences;
 }
 
@@ -193,7 +199,10 @@ int computePower(const std::unordered_map<string, long>& extractionPresences)
 			power *= extractionPresences.find(color)->second;
 		}
 	}
-	std::cout << '\n';
+	if (gDebugEnabled)
+	{
+		std::cout << std::endl;
+	}
 
 	return power;
 }
@@ -217,11 +226,11 @@ bool isExtractionPossible(const std::unordered_map<string, long>& extractionPres
 	{
 		if (isExtractionPossible)
 		{
-			std::cout << "Extraction is possible!" << '\n';
+			std::cout << "Extraction is possible!" << std::endl;
 		}
 		else
 		{
-			std::cout << "Extraction is NOT possible!" << '\n';
+			std::cout << "Extraction is NOT possible!" << std::endl;
 		}
 	}
 
