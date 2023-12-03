@@ -97,7 +97,7 @@ int main()
 	}
 	else
 	{
-		cout << "Could not open input file!\n";
+		cout << "Could not open input file!" << std::endl;
 	}
 
 	cout << "Result for Trial #1 is " << cumSumTrial1 << std::endl;
