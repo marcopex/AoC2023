@@ -193,7 +193,6 @@ long long extrapolateNextSequenceNumber(const Sequence sequence)
 			{
 				std::cout << num << " ";
 			}
-			//std::cout << " | Zeroes?:" << seq.isSequenceNull << " | DeriveNull?: " << seq.isDeriveNull << std::endl;
 			std::cout << std::endl;
 			idxSequences++;
 		}
