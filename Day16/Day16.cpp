@@ -345,16 +345,6 @@ void travelLayout(Layout& l, Direction dir, int x, int y, int recursionCnt)
 			break;
 		}
 
-		//if (not(canMove(l, dir, x, y)))
-		//{
-		//	// exit condition
-		//	setEnergized(l.rows.at(x).at(y), dir, true);
-		//	std::cout << "Exit condition 3!" << std::endl;
-		//	keepDirection = false;
-		//	keepGoing = false;
-		//	break;
-		//}
-
 		auto e = &l.rows.at(x).at(y);
 		if (gDebugEnabled)
 		{
