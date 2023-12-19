@@ -11,10 +11,10 @@ bool gDebugEnabled = false;
 struct Element
 {
 	char symbol;
-	bool energizedFromNorth;
-	bool energizedFromSouth;
-	bool energizedFromWest;
-	bool energizedFromEast;
+	bool energizedGoingNorth;
+	bool energizedGoingSouth;
+	bool energizedGoingWest;
+	bool energizedGoingEast;
 };
 
 struct Layout
@@ -33,8 +33,9 @@ enum class Direction : char
 };
 
 Layout getLayout(std::ifstream& inputFile);
-void travelLayout(Layout& l, const Direction dir, int x, int y);
+void travelLayout(Layout& l, Direction dir, int x, int y, int recursionCnt);
 int countEnergizedElements(const Layout& l);
+int findBestStartingPoint(const Layout& l);
 
 int main()
 {
@@ -69,11 +70,14 @@ int main()
 		std::cout << "Could not open input file!" << std::endl;
 	}
 
-	auto l = getLayout(inputFile);
+	const auto baseLayout = getLayout(inputFile);
 
 	const auto startDir = Direction::East;
-	travelLayout(l, startDir, 0, 0);
-	r1 = countEnergizedElements(l);
+	auto tmpLayout = baseLayout;
+	travelLayout(tmpLayout, startDir, 0, 0, 0);
+	r1 = countEnergizedElements(tmpLayout);
+
+	r2 = findBestStartingPoint(baseLayout);
 
 	std::cout << "Result for Trial #1 is " << r1 << std::endl;
 	std::cout << "Result for Trial #2 is " << r2 << std::endl;
@@ -271,13 +275,13 @@ bool isEnergized(const Element e, const Direction dir)
 	switch (dir)
 	{
 	case Direction::North:
-		return e.energizedFromNorth;
+		return e.energizedGoingNorth;
 	case Direction::South:
-		return e.energizedFromSouth;
+		return e.energizedGoingSouth;
 	case Direction::West:
-		return e.energizedFromWest;
+		return e.energizedGoingWest;
 	case Direction::East:
-		return e.energizedFromEast;
+		return e.energizedGoingEast;
 	default:
 		return false;
 	}
@@ -288,114 +292,160 @@ void setEnergized(Element& e, const Direction dir, bool status)
 	switch (dir)
 	{
 	case Direction::North:
-		e.energizedFromNorth = status;
+		e.energizedGoingNorth = status;
+		break;
 	case Direction::South:
-		e.energizedFromSouth = status;
+		e.energizedGoingSouth = status;
+		break;
 	case Direction::West:
-		e.energizedFromWest = status;
+		e.energizedGoingWest = status;
+		break;
 	case Direction::East:
-		e.energizedFromEast = status;
+		e.energizedGoingEast = status;
+		break;
 	default:
 		return;
 	}
 }
 
-void travelLayout(Layout& l, const Direction dir, int x, int y)
+void travelLayout(Layout& l, Direction dir, int x, int y, int recursionCnt)
 {
-	std::cout << "Travelling Layout with direction:" << getDirectionString(dir) << " on x:" << x << " y:" << y << " | ";
+	recursionCnt++;
 	
-	if ((x < 0) or (x >= l.rows.size()) or (y < 0) or (y >= l.cols.size()))
+	auto keepGoing = true;
+	auto keepDirection = true;
+	while (keepGoing)
 	{
-		// exit condition
-		std::cout << "Exit condition 1!" << std::endl;
-		return;
-	}
+		if (gDebugEnabled)
+		{
+			std::cout << "[" << recursionCnt << "]Dir:" << getDirectionString(dir) << " on x:" << x << " y:" << y << " | ";
+		}
 
-	if (isEnergized(l.rows.at(x).at(y), dir))
-	{
-		// exit condition
-		std::cout << "Exit condition 2!" << std::endl;
-		return;
-	}
+		if ((x < 0) or (x >= l.rows.size()) or (y < 0) or (y >= l.cols.size()))
+		{
+			// exit condition
+			if (gDebugEnabled)
+			{
+				std::cout << "Exit condition 1!" << std::endl;
+			}
+			keepDirection = false;
+			keepGoing = false;
+			break;
+		}
 
-	if (not(canMove(l, dir, x, y)))
-	{
-		// exit condition
+		if (isEnergized(l.rows.at(x).at(y), dir))
+		{
+			// exit condition
+			if (gDebugEnabled)
+			{
+				std::cout << "Exit condition 2!" << std::endl;
+			}
+			keepDirection = false;
+			keepGoing = false;
+			break;
+		}
+
+		//if (not(canMove(l, dir, x, y)))
+		//{
+		//	// exit condition
+		//	setEnergized(l.rows.at(x).at(y), dir, true);
+		//	std::cout << "Exit condition 3!" << std::endl;
+		//	keepDirection = false;
+		//	keepGoing = false;
+		//	break;
+		//}
+
+		auto e = &l.rows.at(x).at(y);
+		if (gDebugEnabled)
+		{
+			std::cout << ":{" << e->symbol << "} Flags:" <<
+				e->energizedGoingNorth << "|" <<
+				e->energizedGoingSouth << "|" <<
+				e->energizedGoingWest << "|" <<
+				e->energizedGoingEast << "|" <<
+				std::endl;
+		}
+
 		setEnergized(l.rows.at(x).at(y), dir, true);
-		std::cout << "Exit condition 3!" << std::endl;
-		return;
-	}
-	
-	auto e = &l.rows.at(x).at(y);
-	std::cout << "Symbol is:" << e->symbol << " Energies: " << 
-		e->energizedFromNorth << "|" <<
-		e->energizedFromSouth << "|" <<
-		e->energizedFromWest << "|" <<
-		e->energizedFromEast << "|" <<
-		std::endl;
-	
-	setEnergized(l.rows.at(x).at(y), dir, true);
 
-	switch (l.rows.at(x).at(y).symbol)
-	{
-	case '.':
-	{
-		// continue in the same direction
-		performMove(l, dir, x, y);
-		travelLayout(l, dir, x, y);
-	}
-	break;
-	case '/':
-	case '\\':
-	{
-		// 90 degrees rotation
-		const auto newDir = rotateDirection(dir, l.rows.at(x).at(y).symbol);
-		performMove(l, newDir, x, y);
-		travelLayout(l, newDir, x, y);
-	}
-	break;
-	case '|':
-	{
-		if ((dir == Direction::North) or (dir == Direction::South))
-		{ // straight, same direction
-			performMove(l, dir, x, y);
-			travelLayout(l, dir, x, y);
+		switch (l.rows.at(x).at(y).symbol)
+		{
+		case '.':
+		{
+			// continue in the same direction
 		}
-		else
-		{ // split
-			auto x1 = x;
-			auto y1 = y;
-			performMove(l, Direction::North, x1, y1);
-			travelLayout(l, Direction::North, x1, y1);
-			auto x2 = x;
-			auto y2 = y;
-			performMove(l, Direction::South, x2, y2);
-			travelLayout(l, Direction::South, x2, y2);
-		}
-	}
-	break;
-	case '-':
-	{
-		if ((dir == Direction::West) or (dir == Direction::East))
-		{ // straight, same direction
-			performMove(l, dir, x, y);
-			travelLayout(l, dir, x, y);
-		}
-		else
-		{ // split
-			auto x1 = x;
-			auto y1 = y;
-			performMove(l, Direction::West, x1, y1);
-			travelLayout(l, Direction::West, x1, y1);
-			auto x2 = x;
-			auto y2 = y;
-			performMove(l, Direction::East, x2, y2);
-			travelLayout(l, Direction::East, x2, y2);
-		}
-	}
-	break;
-	default:
 		break;
+		case '/':
+		case '\\':
+		{
+			// 90 degrees rotation
+			dir = rotateDirection(dir, l.rows.at(x).at(y).symbol);
+		}
+		break;
+		case '|':
+		{
+			if ((dir == Direction::North) or (dir == Direction::South))
+			{ // straight, same direction
+			}
+			else
+			{ // split
+				if (gDebugEnabled)
+				{
+					std::cout << "Splitting North-South" << std::endl;
+				}
+				auto x1 = x;
+				auto y1 = y;
+				performMove(l, Direction::North, x1, y1);
+				travelLayout(l, Direction::North, x1, y1, recursionCnt);
+				auto x2 = x;
+				auto y2 = y;
+				performMove(l, Direction::South, x2, y2);
+				travelLayout(l, Direction::South, x2, y2, recursionCnt);
+				if (gDebugEnabled)
+				{
+					std::cout << "Exit condition 4a!" << std::endl;
+				}
+				keepDirection = false;
+				keepGoing = false;
+			}
+		}
+		break;
+		case '-':
+		{
+			if ((dir == Direction::West) or (dir == Direction::East))
+			{ // straight, same direction
+			}
+			else
+			{ // split
+				if (gDebugEnabled)
+				{
+					std::cout << "Splitting West-East" << std::endl;
+				}
+				auto x1 = x;
+				auto y1 = y;
+				performMove(l, Direction::West, x1, y1);
+				travelLayout(l, Direction::West, x1, y1, recursionCnt);
+				auto x2 = x;
+				auto y2 = y;
+				performMove(l, Direction::East, x2, y2);
+				travelLayout(l, Direction::East, x2, y2, recursionCnt);
+				if (gDebugEnabled)
+				{
+					std::cout << "Exit condition 4b!" << std::endl;
+				}
+				keepDirection = false;
+				keepGoing = false;
+			}
+		}
+		break;
+		default:
+			break;
+		}
+
+		if (keepDirection)
+		{
+			performMove(l, dir, x, y);
+		}
 	}
 }
 
@@ -407,18 +457,119 @@ int countEnergizedElements(const Layout& l)
 	{
 		for (const auto e : r)
 		{
-			if (e.energizedFromNorth or e.energizedFromSouth or e.energizedFromWest or e.energizedFromEast)
+			if (e.energizedGoingNorth or e.energizedGoingSouth or e.energizedGoingWest or e.energizedGoingEast)
 			{
 				cntEnergized++;
-				std::cout << '#';
+				if (gDebugEnabled)
+				{
+					std::cout << '#';
+				}
 			}
 			else
 			{
-				std::cout << '.';
+				if (gDebugEnabled)
+				{
+					std::cout << '.';
+				}
 			}
 		}
-		std::cout << std::endl;
+		if (gDebugEnabled)
+		{
+			std::cout << std::endl;
+		}
 	}
 
 	return cntEnergized;
+}
+
+int findBestStartingPoint(const Layout& l)
+{
+	auto maxEnergy = 0;
+
+	// start from any point of the perimeter of the layout and find max energy
+	const auto xstart = 0;
+	const auto xstop = static_cast<int>(l.rows.size());
+	const auto ystart = 0;
+	const auto ystop = static_cast<int>(l.cols.size());
+	
+	auto tmpLayout = l;
+
+	auto tmpEnergy = 0;
+	auto dir = Direction::South;
+	auto x = xstart;
+	for (auto y = ystart; y < ystop; y++)
+	{
+		tmpLayout = l;
+		travelLayout(tmpLayout, dir, x, y, 0);
+		tmpEnergy = countEnergizedElements(tmpLayout);
+		if (gDebugEnabled)
+		{
+			std::cout << "Dir:" << getDirectionString(dir) << " from:[" << x << "|" << y << "] energy:" << tmpEnergy << std::endl;
+		}
+		if (tmpEnergy > maxEnergy)
+		{
+			maxEnergy = tmpEnergy;
+		}
+	}
+
+	tmpEnergy = 0;
+	dir = Direction::North;
+	x = xstop;
+	for (auto y = ystart; y < ystop; y++)
+	{
+		tmpLayout = l;
+		travelLayout(tmpLayout, Direction::North, x, y, 0);
+		tmpEnergy = countEnergizedElements(tmpLayout);
+		if (gDebugEnabled)
+		{
+			std::cout << "Dir:" << getDirectionString(dir) << " from:[" << x << "|" << y << "] energy:" << tmpEnergy << std::endl;
+		}
+		if (tmpEnergy > maxEnergy)
+		{
+			maxEnergy = tmpEnergy;
+		}
+	}
+
+	tmpEnergy = 0;
+	dir = Direction::East;
+	auto y = ystart;
+	for (auto x = xstart; x < xstop; x++)
+	{
+		tmpLayout = l;
+		travelLayout(tmpLayout, dir, x, y, 0);
+		tmpEnergy = countEnergizedElements(tmpLayout);
+		if (gDebugEnabled)
+		{
+			std::cout << "Dir:" << getDirectionString(dir) << " from:[" << x << "|" << y << "] energy:" << tmpEnergy << std::endl;
+		}
+		if (tmpEnergy > maxEnergy)
+		{
+			maxEnergy = tmpEnergy;
+		}
+	}
+
+	tmpEnergy = 0;
+	dir = Direction::West;
+	y = ystop;
+	for (auto x = xstart; x < xstop; x++)
+	{
+		tmpLayout = l;
+		travelLayout(tmpLayout, dir, x, y, 0);
+		tmpEnergy = countEnergizedElements(tmpLayout);
+		if (gDebugEnabled)
+		{
+			std::cout << "Dir:" << getDirectionString(dir) << " from:[" << x << "|" << y << "] energy:" << tmpEnergy << std::endl;
+		}
+		if (tmpEnergy > maxEnergy)
+		{
+			maxEnergy = tmpEnergy;
+		}
+	}
+	
+	if (gDebugEnabled)
+	{
+		std::cout << "MaxEnergy:" << maxEnergy << std::endl;
+	}
+
+	return maxEnergy;
 }
